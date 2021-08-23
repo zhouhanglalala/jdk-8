@@ -90,6 +90,9 @@ import sun.reflect.misc.ReflectUtil;
  *  <a href="http://www.oracle.com/technetwork/java/javase/documentation/spec-136004.html">JavaBeans&trade; specification</a>.
  */
 
+/**
+ * 自省器
+ */
 public class Introspector {
 
     // Flags that can be used to control getBeanInfo:

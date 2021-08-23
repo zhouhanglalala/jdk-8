@@ -42,7 +42,6 @@ import java.lang.reflect.Type;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -51,14 +50,11 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Spliterator;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.Function;
@@ -269,14 +265,12 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     private static final long serialVersionUID = 7249069246763182397L;
 
     /*
-     * Overview:
+     * 概览:
      *
-     * The primary design goal of this hash table is to maintain
-     * concurrent readability (typically method get(), but also
-     * iterators and related methods) while minimizing update
-     * contention. Secondary goals are to keep space consumption about
-     * the same or better than java.util.HashMap, and to support high
-     * initial insertion rates on an empty table by many threads.
+     * 这个哈希表的主要设计目标是  在最小化更新竞争的时候保持
+     * 并发读的能力 (典型的方法如 get(), 还有迭代和其他相关方法) .
+     * 第二目标是有和HashMap同样的空间消耗或更小的消耗,
+     * 并且在多线程访问空表时提供较高的初始插入率.
      *
      * This map usually acts as a binned (bucketed) hash table.  Each
      * key-value mapping is held in a Node.  Most nodes are instances
@@ -502,36 +496,32 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     /* ---------------- Constants -------------- */
 
     /**
-     * The largest possible table capacity.  This value must be
-     * exactly 1<<30 to stay within Java array allocation and indexing
-     * bounds for power of two table sizes, and is further required
-     * because the top two bits of 32bit hash fields are used for
-     * control purposes.
+     * 最大可能的容量一定要是 2的30次方
+     * 一方面是因为需要让数组的大小边界是2的幂次, 一方面是需要把最左边两个二进制位用来做控制.
      */
     private static final int MAXIMUM_CAPACITY = 1 << 30;
 
     /**
-     * The default initial table capacity.  Must be a power of 2
-     * (i.e., at least 1) and at most MAXIMUM_CAPACITY.
+     * 默认初始容量.  一定要是2的幂次
+     * 并且最大是 MAXIMUM_CAPACITY.
      */
     private static final int DEFAULT_CAPACITY = 16;
 
     /**
-     * The largest possible (non-power of two) array size.
-     * Needed by toArray and related methods.
+     * 最大可能的数组大小(non-power of two) .
+     * toArray等相关方法需要这样的大小.
      */
     static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
     /**
-     * The default concurrency level for this table. Unused but
-     * defined for compatibility with previous versions of this class.
+     * 默认的并发等级. 没有用，但是为了兼容这个类之前的版本.
      */
     private static final int DEFAULT_CONCURRENCY_LEVEL = 16;
 
     /**
-     * The load factor for this table. Overrides of this value in
-     * constructors affect only the initial table capacity.  The
-     * actual floating point value isn't normally used -- it is
+     * 负载因子. 
+     * 在构造器中覆盖这个值只影响初始表容量.  
+     * 实际上，这个浮点值不咋用 -- it is
      * simpler to use expressions such as {@code n - (n >>> 2)} for
      * the associated resizing threshold.
      */
@@ -544,6 +534,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * than 2, and should be at least 8 to mesh with assumptions in
      * tree removal about conversion back to plain bins upon
      * shrinkage.
+     * 单个插孔的树化阈值
      */
     static final int TREEIFY_THRESHOLD = 8;
 
@@ -551,6 +542,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * The bin count threshold for untreeifying a (split) bin during a
      * resize operation. Should be less than TREEIFY_THRESHOLD, and at
      * most 6 to mesh with shrinkage detection under removal.
+     * 单个插孔非树化阈值
      */
     static final int UNTREEIFY_THRESHOLD = 6;
 
@@ -559,6 +551,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * (Otherwise the table is resized if too many nodes in a bin.)
      * The value should be at least 4 * TREEIFY_THRESHOLD to avoid
      * conflicts between resizing and treeification thresholds.
+     * 树化的数组长度要求
      */
     static final int MIN_TREEIFY_CAPACITY = 64;
 
@@ -568,6 +561,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * serves as a lower bound to avoid resizers encountering
      * excessive memory contention.  The value should be at least
      * DEFAULT_CAPACITY.
+     * 最小步长
      */
     private static final int MIN_TRANSFER_STRIDE = 16;
 
